@@ -1,4 +1,4 @@
-(ns status-im.chat.old-views.actions
+(ns status-im.chat.views.actions
   (:require-macros [status-im.utils.views :refer [defview]])
   (:require [re-frame.core :refer [subscribe dispatch]]
             [clojure.string :as s]

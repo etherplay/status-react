@@ -931,7 +931,7 @@ status.command({
     },
     validator: function(params) {
         try {
-            var val = web3.toWei(params.amount, "ether");
+            var val = web3.toWei(params.args.amount, "ether");
             if (val <= 0) { throw new Error(); }
         } catch (err) {
           return {

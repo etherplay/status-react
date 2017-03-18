@@ -23,11 +23,8 @@
             [status-im.chat.views.message.message :refer [chat-message]]
             [status-im.chat.views.message.datemark :refer [chat-datemark]]
             [status-im.chat.views.input.input :as input]
-            #_[status-im.chat.old-views.new-message :refer [chat-message-input-view]]
-            #_[status-im.chat.old-views.response :refer [response-view]]
-            #_[status-im.chat.old-views.actions :refer [actions-view]]
-            #_[status-im.chat.old-views.bottom-info :refer [bottom-info-view]]
-            #_[status-im.chat.old-views.suggestions :refer [suggestion-container]]
+            [status-im.chat.views.actions :refer [actions-view]]
+            [status-im.chat.views.bottom-info :refer [bottom-info-view]]
             [status-im.chat.constants :as const]
             [status-im.i18n :refer [label label-pluralize]]
             [status-im.components.animation :as anim]
@@ -184,15 +181,9 @@
    [chat-toolbar]
    [messages-view group-chat]
    [input/container]
-   #_[chat-message-input-view]
-   #_(when @group-chat [typing-all])
-   #_(when-not command?
-       [suggestion-container])
-   #_[response-view]
-   #_[chat-message-input-view]
-   #_(when show-actions?
+   (when show-actions?
      [actions-view])
-   #_(when show-bottom-info?
+   (when show-bottom-info?
      [bottom-info-view])
    [offline-view {:top (get-in platform-specific
                                [:component-styles :status-bar :default :height])}]])

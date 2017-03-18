@@ -76,7 +76,8 @@
                                                       (dispatch [:load-chat-parameter-box (:command command)])
                                                       (when (not command)
                                                         (dispatch [:set-chat-input-metadata nil])
-                                                        (dispatch [:set-chat-ui-props :result-box nil])))
+                                                        (dispatch [:set-chat-ui-props :result-box nil]))
+                                                      (dispatch [:set-chat-ui-props :validation-messages nil]))
                          :on-content-size-change #(let [h (-> (.-nativeEvent %)
                                                               (.-contentSize)
                                                               (.-height))]
@@ -96,7 +97,8 @@
                 [icon :smile style/input-emoji-icon]]]
               [touchable-highlight {:on-press #(do (dispatch [:set-chat-input-text ""])
                                                    (dispatch [:set-chat-input-metadata nil])
-                                                   (dispatch [:set-chat-ui-props :result-box nil]))}
+                                                   (dispatch [:set-chat-ui-props :result-box nil])
+                                                   (dispatch [:set-chat-ui-props :validation-messages nil]))}
                [view style/input-clear-container
                 [icon :close_gray style/input-clear-icon]]])]))})))
 

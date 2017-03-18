@@ -1,4 +1,4 @@
-(ns status-im.chat.old-views.bottom-info
+(ns status-im.chat.views.bottom-info
   (:require-macros [status-im.utils.views :refer [defview]])
   (:require [re-frame.core :refer [subscribe dispatch]]
             [reagent.core :as r]

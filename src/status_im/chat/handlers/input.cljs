@@ -26,6 +26,7 @@
       (dispatch [:set-chat-input-metadata metadata])
       (dispatch [:set-chat-ui-props :show-suggestions? false])
       (dispatch [:set-chat-ui-props :result-box nil])
+      (dispatch [:set-chat-ui-props :validation-messages nil])
       (dispatch [:load-chat-parameter-box command 0])
       (when-let [ref (get-in chat-ui-props [current-chat-id :input-ref])]
         (.focus ref)))))
