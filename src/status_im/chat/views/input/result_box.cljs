@@ -22,7 +22,6 @@
       [icon :close_gray style/header-close-icon]]]]])
 
 (defview result-box-container [markup]
-  [result-box [:chat-ui-props :result-box]]
   [view {:flex 1}
    markup])
 

@@ -934,14 +934,12 @@ status.command({
             var val = web3.toWei(params.amount, "ether");
             if (val <= 0) { throw new Error(); }
         } catch (err) {
-            return {
-                errors: [
-                    status.components.validationMessage(
-                        I18n.t('validation_title'),
-                        I18n.t('validation_invalid_number')
-                    )
-                ]
-            };
+          return {
+            markup: status.components.validationMessage(
+              I18n.t('validation_title'),
+              I18n.t('validation_invalid_number')
+            )
+          };
         }
     }
 });

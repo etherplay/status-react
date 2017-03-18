@@ -15,6 +15,7 @@
             [status-im.chat.views.input.parameter-box :as parameter-box]
             [status-im.chat.views.input.result-box :as result-box]
             [status-im.chat.views.input.suggestions :as suggestions]
+            [status-im.chat.views.input.validation-messages :as validation-messages]
             [status-im.chat.styles.input.input :as style]
             [status-im.chat.utils :as utils]))
 
@@ -116,6 +117,7 @@
    [parameter-box/parameter-box-view]
    [result-box/result-box-view]
    [suggestions/suggestions-view]
+   [validation-messages/validation-messages-view]
    [view {:style     (style/root margin)
           :on-layout #(let [h (-> (.-nativeEvent %)
                                   (.-layout)

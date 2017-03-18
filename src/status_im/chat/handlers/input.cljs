@@ -115,8 +115,21 @@
       (dispatch [::request-command-data
                  {:command   command
                   :chat-id   chat-id
-                  :data-type :on-send
-                  :after     #(dispatch [::send-command %2 command chat-id])}]))))
+                  :data-type :validator
+                  :after     #(dispatch [::proceed-validation-messages command chat-id %2])}]))))
+
+(handlers/register-handler
+  ::proceed-validation-messages
+  (handlers/side-effect!
+    (fn [db [_ command chat-id errors]]
+      (if errors
+        (dispatch [:set-chat-ui-props :validation-messages errors])
+        (dispatch [::request-command-data
+                   {:command   command
+                    :chat-id   chat-id
+                    :data-type :on-send
+                    :after     #(dispatch [::send-command %2 command chat-id])}])))))
+
 
 (handlers/register-handler
   ::send-command
