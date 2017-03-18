@@ -633,9 +633,9 @@
         (when autorun
           (am/go
             ;;todo: find another way to make it work...
+            (dispatch [:select-chat-input-command {:name autorun}])
             (a/<! (a/timeout 100))
-            (dispatch [:set-chat-command (keyword autorun)])
-            (dispatch [:animate-command-suggestions])))))))
+            (dispatch [:send-current-message])))))))
 
 (register-handler :update-group-message
   (u/side-effect!
