@@ -114,11 +114,15 @@
     (let [chat-id           (or chat-id (@db :current-chat-id))
           show-suggestions? (subscribe [:chat-ui-props :show-suggestions? chat-id])
           input-text        (subscribe [:chat :input-text chat-id])
-          selected-command  (subscribe [:selected-chat-command chat-id])]
+          selected-command  (subscribe [:selected-chat-command chat-id])
+          requests          (subscribe [:chat :request-suggestions chat-id])
+          commands          (subscribe [:chat :command-suggestions chat-id])]
       (reaction
-        (and (not (:command @selected-command))
-             (or @show-suggestions?
-                 (.startsWith (or @input-text "") const/command-char)))))))
+        (and (or @show-suggestions?
+                 (.startsWith (or @input-text "") const/command-char))
+             (not (:command @selected-command))
+             (or (not-empty @requests)
+                 (not-empty @commands)))))))
 
 
 

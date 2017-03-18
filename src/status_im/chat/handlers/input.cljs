@@ -21,12 +21,14 @@
 (handlers/register-handler
   :select-chat-input-command
   (handlers/side-effect!
-    (fn [{:keys [current-chat-id] :as db} [_ {:keys [name] :as command} metadata]]
+    (fn [{:keys [current-chat-id chat-ui-props] :as db} [_ {:keys [name] :as command} metadata]]
       (dispatch [:set-chat-input-text (str const/command-char name const/spacing-char)])
       (dispatch [:set-chat-input-metadata metadata])
       (dispatch [:set-chat-ui-props :show-suggestions? false])
       (dispatch [:set-chat-ui-props :result-box nil])
-      (dispatch [:load-chat-parameter-box command 0]))))
+      (dispatch [:load-chat-parameter-box command 0])
+      (when-let [ref (get-in chat-ui-props [current-chat-id :input-ref])]
+        (.focus ref)))))
 
 (handlers/register-handler
   :set-chat-input-metadata
@@ -55,9 +57,12 @@
   (fn [{:keys [current-chat-id] :as db} [_ chat-id text]]
     (let [chat-id     (or chat-id current-chat-id)
           chat-text   (or text (get-in db [:chats chat-id :input-text]) "")
-          suggestions (suggestions/get-suggestions db chat-text)
+          requests    (suggestions/get-request-suggestions db chat-text)
+          suggestions (suggestions/get-command-suggestions db chat-text)
           {:keys [dapp?]} (get-in db [:contacts chat-id])]
-      (assoc-in db [:chats chat-id :command-suggestions] suggestions))))
+      (-> db
+          (assoc-in [:chats chat-id :request-suggestions] requests)
+          (assoc-in [:chats chat-id :command-suggestions] suggestions)))))
 
 (handlers/register-handler
   :load-chat-parameter-box

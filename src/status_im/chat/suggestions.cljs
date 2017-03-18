@@ -17,15 +17,18 @@
                   chat-consts/command-char)]
       (.startsWith (str chat-consts/command-char name) text'))))
 
-(defn get-suggestions
+(defn get-request-suggestions
+  [{:keys [current-chat-id] :as db} text]
+  (let [requests (get-in db [:chats current-chat-id :requests])]
+    (->> requests
+         (map (fn [{:keys [type] :as v}]
+                (assoc v :name (get-in db [:chats current-chat-id :responses type :name]))))
+         (filter (fn [v] ((can-be-suggested? text) v))))))
+
+(defn get-command-suggestions
   [{:keys [current-chat-id] :as db} text]
   (let [commands (get-in db [:chats current-chat-id :commands])]
     (filter (fn [[_ v]] ((can-be-suggested? text) v)) commands)))
-
-(defn get-command [db text]
-  (when (suggestion? text)
-    ;; TODO change 'commands' to 'suggestions'
-    (first (filter #(= (:text %) text) (get-commands db)))))
 
 (defn handle-command [db command-key content]
   (when-let [command-handler (get-chat-command-request db)]

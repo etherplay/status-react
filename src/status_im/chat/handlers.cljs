@@ -51,7 +51,9 @@
 (register-handler :toggle-chat-ui-props
   (fn [{:keys [current-chat-id chat-ui-props] :as db} [_ ui-element chat-id]]
     (let [chat-id (or chat-id current-chat-id)]
-      (assoc-in db [:chat-ui-props chat-id ui-element] (not (ui-element chat-ui-props))))))
+      (assoc-in db
+                [:chat-ui-props chat-id ui-element]
+                (not (get-in chat-ui-props [chat-id ui-element]))))))
 
 (register-handler :show-message-details
   (u/side-effect!
@@ -137,7 +139,7 @@
 
 (defn check-suggestions
   [db [_ chat-id text]]
-  (let [suggestions (suggestions/get-suggestions db text)
+  (let [suggestions (suggestions/get-suggestions db :commands text)
         {:keys [dapp?]} (get-in db [:contacts chat-id])]
     (when (and dapp? (empty? suggestions))
       (if (seq text)

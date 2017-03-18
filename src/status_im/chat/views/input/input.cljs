@@ -21,7 +21,8 @@
 (defview commands-view []
   []
   [view style/commands-root
-   [touchable-highlight {:on-press #(dispatch [:toggle-chat-ui-props :show-suggestions?])}
+   [touchable-highlight {:on-press #(do (dispatch [:toggle-chat-ui-props :show-suggestions?])
+                                        (dispatch [:update-suggestions]))}
     [view
      [icon :input_list style/commands-list-icon]]]
    [view style/commands
@@ -63,7 +64,8 @@
          (let [{:keys [width height]} (r/state component)
                command @command]
            [view (style/input-root height command)
-            [text-input {:accessibility-label    id/chat-message-input
+            [text-input {:ref                    #(dispatch [:set-chat-ui-props :input-ref %])
+                         :accessibility-label    id/chat-message-input
                          :blur-on-submit         true
                          :default-value          @default-value
                          :multiline              true
@@ -86,11 +88,16 @@
                               :set-layout-width set-layout-width}]
             [input-helper {:command command
                            :width   width}]
-            (when-not command
+            (if-not command
               [touchable-highlight {:on-press #(do (dispatch [:toggle-chat-ui-props :show-emoji?])
                                                    (dismiss-keyboard!))}
                [view
-                [icon :smile style/input-emoji-icon]]])]))})))
+                [icon :smile style/input-emoji-icon]]]
+              [touchable-highlight {:on-press #(do (dispatch [:set-chat-input-text ""])
+                                                   (dispatch [:set-chat-input-metadata nil])
+                                                   (dispatch [:set-chat-ui-props :result-box nil]))}
+               [view style/input-clear-container
+                [icon :close_gray style/input-clear-icon]]])]))})))
 
 (defview input-container []
   [command-complete? [:command-complete?]]

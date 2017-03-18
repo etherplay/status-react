@@ -63,6 +63,16 @@
   {:height 20
    :width  20})
 
+(def input-clear-container
+  {:width            24
+   :height           24
+   :align-items      :center})
+
+(def input-clear-icon
+  {:width      12
+   :height     12
+   :margin-top 6})
+
 (def commands-root
   {:flex-direction :row
    :align-items    :center})

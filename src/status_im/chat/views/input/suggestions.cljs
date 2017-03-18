@@ -48,12 +48,13 @@
    [view style/header-icon]])
 
 (defview suggestions-view []
-  [input-height [:chat-ui-props :input-height]
+  [chat-input-margin [:chat-input-margin]
+   input-height [:chat-ui-props :input-height]
    show-suggestions? [:show-suggestions?]
-   requests [:chat :requests]
-   suggestions [:chat :command-suggestions]]
+   requests [:chat :request-suggestions]
+   commands [:chat :command-suggestions]]
   (when show-suggestions?
-    [view (style/root 250 input-height)
+    [view (style/root 250 (+ input-height chat-input-margin))
      [header]
      [view {:flex 1}
       [scroll-view {:keyboardShouldPersistTaps true}
@@ -63,9 +64,9 @@
           (for [{:keys [chat-id message-id] :as request} requests]
             ^{:key [chat-id message-id]}
             [request-item 0 request])])
-       (when (seq suggestions)
+       (when (seq commands)
          [view
           [item-title (seq requests) (label :t/suggestions-commands)]
-          (for [command (remove #(nil? (:title (second %))) suggestions)]
+          (for [command (remove #(nil? (:title (second %))) commands)]
             ^{:key (first command)}
             [command-item 0 command])])]]]))
