@@ -1779,7 +1779,7 @@ status.command({
                 I18n.t('faucet_incorrect_description')
             );
 
-            return {errors: [error]};
+            return {markup: error};
         }
     }
 });
@@ -1906,13 +1906,13 @@ status.response({
         type: status.types.NUMBER
     }],
     validator: function (params) {
-        if (!/^[\d]{4}$/.test(params.code)) {
+        if (!/^[\d]{4}$/.test(params.args.code)) {
             var error = status.components.validationMessage(
                 I18n.t('confirm_validation_title'),
                 I18n.t('confirm_validation_description')
             );
 
-            return {errors: [error]}
+            return {markup: error};
         }
     }
 });
@@ -1927,44 +1927,16 @@ status.response({
         type: status.types.PASSWORD,
         placeholder: I18n.t('password_placeholder'),
         hidden: true
-    }, {
-        name: "password-confirmation",
-        type: status.types.PASSWORD,
-        placeholder: I18n.t('password_placeholder2'),
-        hidden: true
     }],
-    validator: function (params, context) {
-        var errorMessages = [];
-        var currentParameter = context["current-parameter"];
-
-        if (
-            currentParameter == "password" &&
-            params.password.length < 6
-        ) {
-            errorMessages.push(I18n.t('password_error'));
-        }
-
-        if (currentParameter == "password-confirmation" &&
-            params.password != params["password-confirmation"]) {
-            errorMessages.push(I18n.t('password_error1'));
-        }
-
-        if (errorMessages.length) {
-            var errors = [];
-            for (var idx in errorMessages) {
-                errors.push(
-                    status.components.validationMessage(
-                        I18n.t('password_validation_title'),
-                        errorMessages[idx]
-                    )
-                );
-            }
-
-            return {errors: errors};
-        }
-
-        return {params: params, context: context};
-    },
+  validator: function (params, context) {
+    if (params.args.password.length < 6) {
+      var error = status.components.validationMessage(
+        I18n.t('password_validation_title'),
+        I18n.t('password_error')
+      );
+      return {markup: error};
+    }
+  },
     preview: function (params, context) {
         var style = {
             marginTop: 5,

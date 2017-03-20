@@ -17,7 +17,6 @@
             [status-im.components.webview-bridge :refer [webview-bridge]]
             [status-im.chat.suggestions-responder :as resp]
             [status-im.chat.constants :as c]
-            [status-im.chat.old-views.command-validation :as cv]
             [status-im.chat.old-styles.response :as st]
             [status-im.chat.old-styles.dragdown :as ddst]
             [status-im.utils.datetime :as dt]

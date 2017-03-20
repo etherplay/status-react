@@ -11,12 +11,41 @@
             [status-im.utils.random :as random]
             [clojure.string :as str]))
 
+(defn- changed-arg-position [xs ys]
+  (let [longest  (into [] (max-key count xs ys))
+        shortest (into [] (if (= longest xs) ys xs))]
+    (->> longest
+         (map-indexed (fn [index x]
+                        (if (and (> (count shortest) index)
+                                 (= x (get shortest index)))
+                          nil
+                          index)))
+         (remove nil?)
+         (first))))
+
+(defn- masked-input-text [text changed-arg-position]
+  (let [hide-fn      #(apply str (repeat (count %) const/masking-char))
+        updated-text (update text (inc changed-arg-position) hide-fn)]
+    (str/join const/spacing-char updated-text)))
+
 (handlers/register-handler
   :set-chat-input-text
-  (fn [{:keys [current-chat-id] :as db} [_ text chat-id]]
+  (fn [{:keys [current-chat-id chats] :as db} [_ text chat-id]]
     (let [chat-id (or chat-id current-chat-id)]
       (dispatch [:update-suggestions chat-id text])
-      (assoc-in db [:chats chat-id :input-text] text))))
+      (if-let [{old-command :command
+                old-args    :args} (input-model/selected-chat-command db chat-id)]
+        (let [new-text      (into [] (str/split text const/spacing-char))
+              new-args      (rest new-text)
+              arg-pos       (changed-arg-position old-args new-args)
+              current-param (get-in old-command [:params arg-pos])]
+          (update-in db [:chats chat-id] merge {:masked-text   (when (:hidden current-param)
+                                                                 (masked-input-text new-text arg-pos))
+                                                :input-text    text
+                                                :current-param current-param}))
+        (cond-> (assoc-in db [:chats chat-id :input-text] text)
+                (nil? text) (update-in [:chats chat-id] merge {:masked-text   nil
+                                                               :current-param nil}))))))
 
 (handlers/register-handler
   :select-chat-input-command

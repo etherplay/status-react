@@ -53,7 +53,8 @@
   (let [component         (r/current-component)
         set-layout-width  #(r/set-state component {:width %})
         set-layout-height #(r/set-state component {:height %})
-        default-value     (subscribe [:chat :input-text])
+        input-text        (subscribe [:chat :input-text])
+        masked-text       (subscribe [:chat :masked-text])
         command           (subscribe [:selected-chat-command])]
     (r/create-class
       {:component-will-mount
@@ -65,40 +66,43 @@
          (let [{:keys [width height]} (r/state component)
                command @command]
            [view (style/input-root height command)
-            [text-input {:ref                    #(dispatch [:set-chat-ui-props :input-ref %])
-                         :accessibility-label    id/chat-message-input
-                         :blur-on-submit         true
-                         :default-value          @default-value
-                         :multiline              true
-                         :on-blur                #(do (dispatch [:set-chat-ui-props :input-focused? false])
-                                                      (set-layout-height 0))
-                         :on-change-text         #(do (dispatch [:set-chat-input-text %])
-                                                      (dispatch [:load-chat-parameter-box (:command command)])
-                                                      (when (not command)
-                                                        (dispatch [:set-chat-input-metadata nil])
-                                                        (dispatch [:set-chat-ui-props :result-box nil]))
-                                                      (dispatch [:set-chat-ui-props :validation-messages nil]))
-                         :on-content-size-change #(let [h (-> (.-nativeEvent %)
-                                                              (.-contentSize)
-                                                              (.-height))]
-                                                    (set-layout-height h))
-                         :on-submit-editing      #(dispatch [:send-current-message])
-                         :on-focus               #(do (dispatch [:set-chat-ui-props :input-focused? true])
-                                                      (dispatch [:set-chat-ui-props :show-emoji? false]))
-                         :style                  style/input-view}]
-            [invisible-input {:value            @default-value
+            [text-input
+             {:ref                    #(dispatch [:set-chat-ui-props :input-ref %])
+              :accessibility-label    id/chat-message-input
+              :blur-on-submit         true
+              :default-value          (or @masked-text @input-text)
+              :multiline              true
+              :on-blur                #(do (dispatch [:set-chat-ui-props :input-focused? false])
+                                           (set-layout-height 0))
+              :on-change-text         #(do (dispatch [:set-chat-input-text %])
+                                           (dispatch [:load-chat-parameter-box (:command command)])
+                                           (when (not command)
+                                             (dispatch [:set-chat-input-metadata nil])
+                                             (dispatch [:set-chat-ui-props :result-box nil]))
+                                           (dispatch [:set-chat-ui-props :validation-messages nil]))
+              :on-content-size-change #(let [h (-> (.-nativeEvent %)
+                                                   (.-contentSize)
+                                                   (.-height))]
+                                         (set-layout-height h))
+              :on-submit-editing      #(dispatch [:send-current-message])
+              :on-focus               #(do (dispatch [:set-chat-ui-props :input-focused? true])
+                                           (dispatch [:set-chat-ui-props :show-emoji? false]))
+              :style                  style/input-view}]
+            [invisible-input {:value            (or @masked-text @input-text)
                               :set-layout-width set-layout-width}]
             [input-helper {:command command
                            :width   width}]
             (if-not command
-              [touchable-highlight {:on-press #(do (dispatch [:toggle-chat-ui-props :show-emoji?])
-                                                   (dismiss-keyboard!))}
+              [touchable-highlight
+               {:on-press #(do (dispatch [:toggle-chat-ui-props :show-emoji?])
+                               (dismiss-keyboard!))}
                [view
                 [icon :smile style/input-emoji-icon]]]
-              [touchable-highlight {:on-press #(do (dispatch [:set-chat-input-text ""])
-                                                   (dispatch [:set-chat-input-metadata nil])
-                                                   (dispatch [:set-chat-ui-props :result-box nil])
-                                                   (dispatch [:set-chat-ui-props :validation-messages nil]))}
+              [touchable-highlight
+               {:on-press #(do (dispatch [:set-chat-input-text nil])
+                               (dispatch [:set-chat-input-metadata nil])
+                               (dispatch [:set-chat-ui-props :result-box nil])
+                               (dispatch [:set-chat-ui-props :validation-messages nil]))}
                [view style/input-clear-container
                 [icon :close_gray style/input-clear-icon]]])]))})))
 

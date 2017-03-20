@@ -60,7 +60,6 @@
 (defn get-options [{:keys [type placeholder]} command-type]
   (let [options (case (keyword type)
                   :phone {:keyboard-type "phone-pad"}
-                  :password {:secure-text-entry true}
                   :number {:keyboard-type "numeric"}
                   nil)]
     (if (= :response command-type)
