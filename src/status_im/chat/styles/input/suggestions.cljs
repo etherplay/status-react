@@ -66,17 +66,3 @@
    :margin-right 16
    :margin-top   4
    :color        color-item-title-text})
-
-;; ALWX: REFACTOR
-
-(def request-container
-  {:flex-direction :row})
-
-(def request-info-description
-  {:font-size 12
-   :color     common/color-black})
-
-(def request-message-info
-  {:font-size  12
-   :margin-top 2
-   :color      common/color-gray})

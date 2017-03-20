@@ -26,11 +26,11 @@
                                                   valid-mobile-number?]]
             [status-im.components.status :as status]
             [status-im.utils.types :refer [json->clj]]
-            status-im.chat.handlers.old.commands
             [status-im.commands.utils :refer [command-prefix]]
             [status-im.chat.utils :refer [console? not-console? safe-trim]]
             [status-im.utils.gfycat.core :refer [generate-gfy]]
             status-im.chat.handlers.input
+            status-im.chat.handlers.commands
             status-im.chat.handlers.animation
             status-im.chat.handlers.requests
             status-im.chat.handlers.unviewed-messages
@@ -97,134 +97,12 @@
   (fn [db [_ {:keys [chat-id message-id]}]]
     (set-message-shown db chat-id message-id)))
 
-
-
-
-
-
-
-
-
-
-
 (register-handler :cancel-command
   (fn [{:keys [current-chat-id] :as db} _]
     (-> db
         (dissoc :canceled-command)
         (assoc-in [:chats current-chat-id :command-input] {})
         (update-in [:chats current-chat-id :input-text] safe-trim))))
-
-(register-handler :start-cancel-command
-  (after #(dispatch [:set-soft-input-mode :resize]))
-  (u/side-effect!
-    (fn []
-      (dispatch [:animate-cancel-command])
-      (dispatch [:cancel-command]))))
-
-
-
-(defn update-command [db [_ text]]
-  (if-not (commands/get-chat-command db)
-    (let [{:keys [command]} (suggestions/check-suggestion db text)]
-      (if command
-        (commands/set-command-input db :commands command)
-        db))
-    db))
-
-(defn set-command-suggestions
-  [db [_ chat-id suggestions]]
-  (assoc-in db [:command-suggestions chat-id] suggestions))
-
-(register-handler ::set-command-suggestions set-command-suggestions)
-
-(defn check-suggestions
-  [db [_ chat-id text]]
-  (let [suggestions (suggestions/get-suggestions db :commands text)
-        {:keys [dapp?]} (get-in db [:contacts chat-id])]
-    (when (and dapp? (empty? suggestions))
-      (if (seq text)
-        (dispatch [::check-dapp-suggestions chat-id text])
-        (dispatch [:clear-response-suggestions chat-id])))
-    (log/debug "Suggestions: " suggestions)
-    (assoc-in db [:command-suggestions chat-id] suggestions)))
-
-(defn select-suggestion!
-  [db [_ chat-id text]]
-  (let [suggestions (get-in db [:command-suggestions chat-id])]
-    (if (= 1 (count suggestions))
-      (dispatch [:set-chat-command (ffirst suggestions)])
-      (dispatch [::set-text chat-id text]))))
-
-(register-handler ::check-dapp-suggestions
-  (u/side-effect!
-    (fn [db [_ chat-id text]]
-      (let [data   (get-in db [:local-storage chat-id])
-            path   [:functions
-                    :message-suggestions]
-            params {:parameters {:message text}
-                    :context    {:data data}}]
-        (status/call-jail chat-id
-                          path
-                          params
-                          (fn [{:keys [result] :as data}]
-                            (let [{:keys [returned]} result]
-                              (log/debug "Message suggestions: " returned)
-                              (if returned
-                                (dispatch [:suggestions-handler {:chat-id chat-id} data])
-                                (dispatch [:clear-response-suggestions chat-id])))))))))
-
-#_(register-handler :set-chat-input-text
-  (u/side-effect!
-    (fn [{:keys [current-chat-id]} [_ text]]
-      ;; fixes https://github.com/status-im/status-react/issues/594
-      ;; todo: revisit with more clever solution
-      (let [text' (if (= text (str chat-consts/command-char " ")) chat-consts/command-char text)]
-        (when (string/blank? text)
-          (dispatch [:set-in [:suggestions current-chat-id] nil]))
-        (if (console? current-chat-id)
-          (dispatch [::check-input-for-commands text'])
-          (dispatch [::check-suggestions current-chat-id text']))))))
-
-(register-handler :add-to-chat-input-text
-  (u/side-effect!
-    (fn [{:keys [chats current-chat-id]} [_ text-to-add]]
-      (let [input-text (get-in chats [current-chat-id :input-text])]
-        (dispatch [:set-chat-input-text (str input-text text-to-add)])))))
-
-(def possible-commands
-  {[:confirmation-code :responses] #(re-matches #"^[\d]{4}$" %)
-   [:phone :commands]              valid-mobile-number?})
-
-(defn check-text-for-commands [text]
-  (ffirst (filter (fn [[_ f]] (f text)) possible-commands)))
-
-(register-handler ::check-input-for-commands
-  (u/side-effect!
-    (fn [_ [_ text]]
-      (if-let [[_ type :as command] (check-text-for-commands text)]
-        (let [text' (if (= :commands type)
-                      (str command-prefix text)
-                      text)]
-          (dispatch [::set-command-with-content command text']))
-        (dispatch [::check-suggestions console-chat-id text])))))
-
-(register-handler ::set-command-with-content
-  (u/side-effect!
-    (fn [_ [_ [command type] text]]
-      (dispatch [:set-chat-command command type])
-      (dispatch [:set-chat-command-content text]))))
-
-(register-handler ::check-suggestions
-  [(after select-suggestion!)
-   (after #(dispatch [:animate-command-suggestions]))]
-  check-suggestions)
-
-
-
-
-(register-handler ::set-text
-  (fn [db [_ chat-id text]]
-    (assoc-in db [:chats chat-id :input-text] text)))
 
 (defn init-console-chat
   ([{:keys [chats current-account-id] :as db} existing-account?]
@@ -361,8 +239,6 @@
         commands-loaded? (if js/goog.DEBUG
                            false
                            (get-in db [:chats chat-id :commands-loaded]))]
-    (when (= current-chat-id wallet-chat-id)
-      (dispatch [:cancel-command]))
     (dispatch [:load-requests! chat-id])
     ;; todo rewrite this. temporary fix for https://github.com/status-im/status-react/issues/607
     #_(dispatch [:load-commands! chat-id])
@@ -467,25 +343,9 @@
       (chats/save chat)
       (update-in db [:chats chat-id] merge chat))))
 
-(register-handler :switch-command-suggestions!
-  (u/side-effect!
-    (fn [db]
-      (let [text (if (suggestions/typing-command? db) "" chat-consts/command-char)]
-        (dispatch [:set-chat-input-text text])))))
-
 (defn remove-chat
   [db [_ chat-id]]
   (update db :chats dissoc chat-id))
-
-; todo do we really need this message?
-(defn leaving-message!
-  [{:keys [current-chat-id]} _]
-  (messages/save
-    current-chat-id
-    {:from         "system"
-     :message-id   (random/id)
-     :content      "You left this chat"
-     :content-type text-content-type}))
 
 (defn delete-messages!
   [{:keys [current-chat-id]} [_ chat-id]]
@@ -524,38 +384,9 @@
 
 (register-handler :remove-chat
   (-> remove-chat
-      ;((after leaving-message!))
       ((after delete-messages!))
       ((after remove-pending-messages!))
       ((after delete-chat!))))
-
-(defn edit-mode-handler [mode]
-  (fn [{:keys [current-chat-id] :as db} _]
-    (assoc-in db [:edit-mode current-chat-id] mode)))
-
-(register-handler :command-edit-mode
-  (after #(dispatch [:clear-validation-errors]))
-  (edit-mode-handler :command))
-
-(register-handler :text-edit-mode
-  (after #(dispatch [:set-chat-input-text ""]))
-  (edit-mode-handler :text))
-
-(register-handler :set-layout-height
-  [(after
-     (fn [{:keys [current-chat-id] :as db}]
-       (let [suggestions (get-in db [:has-suggestions? current-chat-id])
-             mode        (get-in db [:edit-mode current-chat-id])]
-         (when (and (= :command mode) suggestions)
-           (dispatch [:fix-response-height nil nil true])))))
-   (after
-     (fn [{:keys [current-chat-id] :as db}]
-       (let [suggestions (get-in db [:command-suggestions current-chat-id])
-             mode        (get-in db [:edit-mode current-chat-id])]
-         (when (and (not= :command mode) (seq suggestions))
-           (dispatch [:fix-commands-suggestions-height nil nil true])))))]
-  (fn [db [_ h]]
-    (assoc db :layout-height h)))
 
 (defn send-seen!
   [{:keys [web3 current-public-key chats]}
@@ -568,6 +399,7 @@
                                         :to         from
                                         :group-id   (when group-chat chat-id)
                                         :message-id message-id}})))))
+
 (register-handler :send-seen!
   [(after (fn [_ [_ {:keys [message-id]}]]
             (messages/update {:message-id     message-id
@@ -608,31 +440,12 @@
       (let [{:keys [clock-value]} (messages/get-by-id message-id)]
         (send-clock-value! db to message-id clock-value)))))
 
-(register-handler :set-web-view-url
-  (fn [{:keys [current-chat-id] :as db} [_ url]]
-    (assoc-in db [:web-view-url current-chat-id] url)))
-
-(register-handler :set-web-view-extra-js
-  (fn [{:keys [current-chat-id] :as db} [_ extra-js]]
-    (assoc-in db [:web-view-extra-js current-chat-id] extra-js)))
-
-(register-handler :set-soft-input-mode
-  (after
-    (fn [{:keys [current-chat-id]} [_ mode chat-id]]
-      (when (or (nil? chat-id) (= current-chat-id chat-id))
-        (status/set-soft-input-mode (if (= :pan mode)
-                                      status/adjust-pan
-                                      status/adjust-resize)))))
-  (fn [db [_ chat-id mode]]
-    (assoc-in db [:kb-mode chat-id] mode)))
-
 (register-handler :check-autorun
   (u/side-effect!
     (fn [{:keys [current-chat-id] :as db}]
       (let [autorun (get-in db [:chats current-chat-id :autorun])]
         (when autorun
           (am/go
-            ;;todo: find another way to make it work...
             (dispatch [:select-chat-input-command {:name autorun}])
             (a/<! (a/timeout 100))
             (dispatch [:send-current-message])))))))

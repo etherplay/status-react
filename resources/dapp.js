@@ -6,27 +6,27 @@ I18n.translations = {
 };
 
 status.command({
-    name: "browse",
-    title: I18n.t('browse_title'),
-    description: I18n.t('browse_description'),
-    color: "#ffa500",
-    fullscreen: true,
-    suggestionsTrigger: 'on-send',
-    params: [{
-        name: "url",
-        suggestions: function(params, context) {
-            var url = "dapp-url";
+  name: "browse",
+  fullscreen: true,
+  title: I18n.t('browse_title'),
+  description: I18n.t('browse_description'),
+  params: [{
+    name: "url",
+    placeholder: "url",
+    type: status.types.TEXT
+  }],
+  onSend: function (params, context) {
+    var url = params.args.url;
+    if (!/^[a-zA-Z-_]+:/.test(url)) {
+      url = 'http://' + url;
+    }
 
-            if (params.url && params.url !== "undefined" && params.url != "") {
-                url = params.url;
-                if (!/^[a-zA-Z-_]+:/.test(url)) {
-                    url = 'http://' + url;
-                }
-            }
-            return {webViewUrl: url};
-        },
-        type: status.types.TEXT
-    }]
+    return {
+      title: "Browser",
+      dynamicTitle: true,
+      markup: status.components.bridgedWebView(url)
+    };
+  }
 });
 
 status.autorun("browse");

@@ -48,10 +48,20 @@
                                                                :current-param nil}))))))
 
 (handlers/register-handler
+  :add-to-chat-input-text
+  (handlers/side-effect!
+    (fn [{:keys [chats current-chat-id]} [_ text-to-add]]
+      (let [input-text (get-in chats [current-chat-id :input-text])]
+        (dispatch [:set-chat-input-text (str input-text text-to-add)])))))
+
+(handlers/register-handler
   :select-chat-input-command
   (handlers/side-effect!
-    (fn [{:keys [current-chat-id chat-ui-props] :as db} [_ {:keys [name] :as command} metadata]]
-      (dispatch [:set-chat-input-text (str const/command-char name const/spacing-char)])
+    (fn [{:keys [current-chat-id chat-ui-props] :as db} [_ {:keys [name prefill] :as command} metadata]]
+      (dispatch [:set-chat-input-text (str const/command-char
+                                           name
+                                           const/spacing-char
+                                           (str/join const/spacing-char prefill))])
       (dispatch [:set-chat-input-metadata metadata])
       (dispatch [:set-chat-ui-props :show-suggestions? false])
       (dispatch [:set-chat-ui-props :result-box nil])
@@ -207,6 +217,7 @@
     (fn [{:keys [current-chat-id] :as db} [_ chat-id]]
       (let [chat-id      (or chat-id current-chat-id)
             chat-command (input-model/selected-chat-command db chat-id)]
+        (log/debug "ALWX chat-command" chat-command)
         (if chat-command
           (when (input-model/command-complete? chat-command)
             (dispatch [::proceed-command chat-command chat-id]))

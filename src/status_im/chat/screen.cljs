@@ -173,11 +173,7 @@
    layout-height [:get :layout-height]]
   {:component-did-mount    #(dispatch [:check-autorun])
    :component-will-unmount #(dispatch [:set-chat-ui-props :show-emoji? false])}
-  [view {:style    st/chat-view
-         :onLayout (fn [event]
-                     (let [height (.. event -nativeEvent -layout -height)]
-                       (when (not= height layout-height)
-                         (dispatch [:set-layout-height height]))))}
+  [view st/chat-view
    [chat-toolbar]
    [messages-view group-chat]
    [input/container]

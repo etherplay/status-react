@@ -43,4 +43,4 @@
   (u/side-effect!
     (fn [db _]
       (dispatch [:navigate-to :chat console-chat-id])
-      (dispatch [:set-chat-command :phone]))))
+      (js/setTimeout #(dispatch [:select-chat-input-command {:name "phone"}]) 500))))

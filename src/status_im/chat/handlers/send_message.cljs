@@ -70,11 +70,6 @@
       (when-not (s/blank? message)
         (dispatch [::prepare-message params])))))
 
-(register-handler :clear-input
-  (path :chats)
-  (fn [db [_ chat-id]]
-    (assoc-in db [chat-id :input-text] nil)))
-
 (register-handler :prepare-command!
   (u/side-effect!
     (fn [{:keys [current-public-key network-status] :as db}
@@ -92,7 +87,7 @@
         (dispatch [:set-chat-ui-props :sending-disabled? false])
         (dispatch [::send-command! add-to-chat-id (assoc params :command command') hidden-params])
         (when (cu/console? chat-id)
-          (dispatch `[:console-respond-command params]))
+          (dispatch [:console-respond-command params]))
         (when (and (= "send" (get-in command-message [:command :name]))
                    (not= add-to-chat-id wallet-chat-id))
           (let [ct               (if request
@@ -195,13 +190,6 @@
                                 :timestamp (time/now-ms)}])
       (messages/save chat-id message))))
 
-(register-handler :clear-response-suggestions
-  (fn [db [_ chat-id]]
-    (-> db
-        (update-in [:suggestions] dissoc chat-id)
-        (update-in [:has-suggestions?] dissoc chat-id)
-        (assoc-in [:animations :to-response-height chat-id] input-height))))
-
 (register-handler ::send-dapp-message
   (u/side-effect!
     (fn [db [_ chat-id {:keys [content]}]]
@@ -210,7 +198,6 @@
                     :message-handler]
             params {:parameters {:message content}
                     :context    {:data data}}]
-        (dispatch [:clear-response-suggestions chat-id])
         (status/call-jail chat-id
                           path
                           params
