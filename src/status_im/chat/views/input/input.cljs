@@ -55,6 +55,7 @@
         set-layout-height #(r/set-state component {:height %})
         input-text        (subscribe [:chat :input-text])
         masked-text       (subscribe [:chat :masked-text])
+        current-param     (subscribe [:chat :current-param])
         command           (subscribe [:selected-chat-command])]
     (r/create-class
       {:component-will-mount
@@ -84,6 +85,10 @@
                                                    (.-contentSize)
                                                    (.-height))]
                                          (set-layout-height h))
+              :on-selection-change    #(let [s (-> (.-nativeEvent %)
+                                                   (.-selection))]
+                                         (dispatch [:set-chat-ui-props :selection {:start (.-start s)
+                                                                                   :end   (.-end s)}]))
               :on-submit-editing      #(dispatch [:send-current-message])
               :on-focus               #(do (dispatch [:set-chat-ui-props :input-focused? true])
                                            (dispatch [:set-chat-ui-props :show-emoji? false]))

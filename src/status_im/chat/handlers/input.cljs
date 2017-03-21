@@ -3,6 +3,7 @@
             [taoensso.timbre :as log]
             [status-im.chat.constants :as const]
             [status-im.chat.models.input :as input-model]
+            [status-im.chat.models.password-input :as password-input]
             [status-im.chat.suggestions :as suggestions]
             [status-im.components.react :as react-comp]
             [status-im.components.status :as status]
@@ -23,26 +24,36 @@
          (remove nil?)
          (first))))
 
-(defn- masked-input-text [text changed-arg-position]
-  (let [hide-fn      #(apply str (repeat (count %) const/masking-char))
-        updated-text (update text (inc changed-arg-position) hide-fn)]
-    (str/join const/spacing-char updated-text)))
+(def text-maskers
+  [password-input/masker])
 
 (handlers/register-handler
   :set-chat-input-text
-  (fn [{:keys [current-chat-id chats] :as db} [_ text chat-id]]
-    (let [chat-id (or chat-id current-chat-id)]
+  (fn [{:keys [current-chat-id chats chat-ui-props] :as db} [_ text chat-id]]
+    (let [chat-id   (or chat-id current-chat-id)
+          selection (get-in chat-ui-props [chat-id :selection])]
       (dispatch [:update-suggestions chat-id text])
+      ;; the code bellow allows text maskers to work
       (if-let [{old-command :command
                 old-args    :args} (input-model/selected-chat-command db chat-id)]
         (let [new-text      (into [] (str/split text const/spacing-char))
               new-args      (rest new-text)
               arg-pos       (changed-arg-position old-args new-args)
-              current-param (get-in old-command [:params arg-pos])]
-          (update-in db [:chats chat-id] merge {:masked-text   (when (:hidden current-param)
-                                                                 (masked-input-text new-text arg-pos))
-                                                :input-text    text
-                                                :current-param current-param}))
+              current-param (get-in old-command [:params arg-pos])
+              text-masker   (first (filter #((:execute-when %) current-param) text-maskers))
+              new-params    {:masked-text   (when text-masker
+                                              (let [{:keys [get-masked-text]} text-masker]
+                                                (get-masked-text new-text arg-pos)))
+                             :input-text    (if text-masker
+                                              (let [{:keys [make-change]} text-masker]
+                                                (make-change {:old-command old-command
+                                                              :old-args    old-args
+                                                              :new-args    new-args
+                                                              :arg-pos     arg-pos
+                                                              :selection   selection}))
+                                              text)
+                             :current-param current-param}]
+          (update-in db [:chats chat-id] merge new-params))
         (cond-> (assoc-in db [:chats chat-id :input-text] text)
                 (nil? text) (update-in [:chats chat-id] merge {:masked-text   nil
                                                                :current-param nil}))))))
@@ -67,8 +78,7 @@
       (dispatch [:set-chat-ui-props :result-box nil])
       (dispatch [:set-chat-ui-props :validation-messages nil])
       (dispatch [:load-chat-parameter-box command 0])
-      (when-let [ref (get-in chat-ui-props [current-chat-id :input-ref])]
-        (.focus ref)))))
+      (dispatch [:chat-input-focus]))))
 
 (handlers/register-handler
   :set-chat-input-metadata
@@ -91,6 +101,13 @@
                                              const/spacing-char
                                              (str/join const/spacing-char command-args)
                                              const/spacing-char)])))))
+
+(handlers/register-handler
+  :chat-input-focus
+  (handlers/side-effect!
+    (fn [{:keys [current-chat-id chat-ui-props] :as db}]
+      (when-let [ref (get-in chat-ui-props [current-chat-id :input-ref])]
+        (.focus ref)))))
 
 (handlers/register-handler
   :update-suggestions
@@ -217,7 +234,6 @@
     (fn [{:keys [current-chat-id] :as db} [_ chat-id]]
       (let [chat-id      (or chat-id current-chat-id)
             chat-command (input-model/selected-chat-command db chat-id)]
-        (log/debug "ALWX chat-command" chat-command)
         (if chat-command
           (when (input-model/command-complete? chat-command)
             (dispatch [::proceed-command chat-command chat-id]))

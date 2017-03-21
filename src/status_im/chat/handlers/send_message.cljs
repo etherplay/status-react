@@ -66,9 +66,7 @@
 
               :else
               (dispatch [:prepare-command! chat-id params'])))))
-      (dispatch [:set-chat-ui-props :sending-disabled? false])
-      (when-not (s/blank? message)
-        (dispatch [::prepare-message params])))))
+      (dispatch [:set-chat-ui-props :sending-disabled? false]))))
 
 (register-handler :prepare-command!
   (u/side-effect!
