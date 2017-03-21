@@ -25,7 +25,7 @@
          (first))))
 
 (def text-maskers
-  [password-input/masker])
+  [])
 
 (handlers/register-handler
   :set-chat-input-text
@@ -159,6 +159,7 @@
                      :address  current-account-id}]
         (dispatch [:set-chat-input-text nil chat-id])
         (dispatch [:set-chat-input-metadata nil chat-id])
+        (dispatch [:set-chat-ui-props :sending-disabled? true])
         (cond
           command-message
           (dispatch [:check-commands-handlers! data])
@@ -196,15 +197,11 @@
         (do
           (dispatch [:set-chat-ui-props :result-box on-send])
           (react-comp/dismiss-keyboard!))
-        (do
-          (dispatch [:set-chat-input-text nil chat-id])
-          (dispatch [:set-chat-input-metadata nil chat-id])
-          (dispatch [:set-chat-ui-props :sending-disabled? true])
-          (dispatch [::request-command-data
-                     {:command   command
-                      :chat-id   chat-id
-                      :data-type :preview
-                      :after     #(dispatch [::send-message % chat-id])}]))))))
+        (dispatch [::request-command-data
+                   {:command   command
+                    :chat-id   chat-id
+                    :data-type :preview
+                    :after     #(dispatch [::send-message % chat-id])}])))))
 
 (handlers/register-handler
   ::request-command-data

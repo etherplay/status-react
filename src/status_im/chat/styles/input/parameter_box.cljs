@@ -11,6 +11,7 @@
    :height           height
    :left             0
    :right            0
+   :elevation        2
    :bottom           bottom
    :position         :absolute})
 

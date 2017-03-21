@@ -24,7 +24,7 @@
   [view style/commands-root
    [touchable-highlight {:on-press #(do (dispatch [:toggle-chat-ui-props :show-suggestions?])
                                         (dispatch [:update-suggestions]))}
-    [view
+    [view style/commands-list-icon
      [icon :input_list style/commands-list-icon]]]
    [view style/commands
     [text {:style style/command
@@ -71,16 +71,18 @@
              {:ref                    #(dispatch [:set-chat-ui-props :input-ref %])
               :accessibility-label    id/chat-message-input
               :blur-on-submit         true
-              :default-value          (or @masked-text @input-text)
+              :default-value          (or @masked-text @input-text "")
               :multiline              true
-              :on-blur                #(do (dispatch [:set-chat-ui-props :input-focused? false])
+              :on-blur                #(do (dispatch [:send-current-message])
+                                           (dispatch [:set-chat-ui-props :input-focused? false])
                                            (set-layout-height 0))
-              :on-change-text         #(do (dispatch [:set-chat-input-text %])
-                                           (dispatch [:load-chat-parameter-box (:command command)])
-                                           (when (not command)
-                                             (dispatch [:set-chat-input-metadata nil])
-                                             (dispatch [:set-chat-ui-props :result-box nil]))
-                                           (dispatch [:set-chat-ui-props :validation-messages nil]))
+              :on-change-text         #(when-not (str/includes? % "\n")
+                                         (do (dispatch [:set-chat-input-text %])
+                                             (dispatch [:load-chat-parameter-box (:command command)])
+                                             (when (not command)
+                                               (dispatch [:set-chat-input-metadata nil])
+                                               (dispatch [:set-chat-ui-props :result-box nil]))
+                                             (dispatch [:set-chat-ui-props :validation-messages nil])))
               :on-content-size-change #(let [h (-> (.-nativeEvent %)
                                                    (.-contentSize)
                                                    (.-height))]

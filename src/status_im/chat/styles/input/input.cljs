@@ -1,5 +1,6 @@
 (ns status-im.chat.styles.input.input
-  (:require [status-im.components.styles :as common]))
+  (:require [status-im.components.styles :as common]
+            [status-im.utils.platform :as platform]))
 
 (def color-root-border "rgba(192, 198, 202, 0.28)")
 (def color-input "#edf1f3")
@@ -16,6 +17,7 @@
   {:border-top-color color-root-border
    :border-top-width 1
    :flex-direction   :column
+   :elevation        2
    :margin-bottom    margin-bottom})
 
 (defn container [command?]
@@ -52,12 +54,13 @@
    :color            :transparent})
 
 (defn input-helper-text [left]
-  {:color       color-input-helper-text
-   :font-size   14
-   :position    :absolute
-   :height      min-input-height
-   :line-height min-input-height
-   :left        (+ 14 left)})
+  {:color               color-input-helper-text
+   :font-size           14
+   :position            :absolute
+   :height              min-input-height
+   :left                (+ 14 (if platform/android? 4 0) left)
+   :top                 (if platform/android? -1 0)
+   :text-align-vertical :center})
 
 (def input-emoji-icon
   {:height 20

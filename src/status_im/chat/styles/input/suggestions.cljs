@@ -10,6 +10,7 @@
   {:background-color common/color-white
    :border-top-color color-root-border
    :border-top-width 1
+   :elevation        2
    :flex-direction   :column
    :height           height
    :left             0

@@ -87,8 +87,9 @@
 (defn icon
   ([n] (icon n st/icon-default))
   ([n style]
-   [image {:source {:uri (keyword (str "icon_" (name n)))}
-           :style  style}]))
+   [image {:source     {:uri (keyword (str "icon_" (name n)))}
+           :resizeMode "contain"
+           :style      style}]))
 
 (defn list-view [props]
   [list-view-class (merge {:enableEmptySections true} props)])
