@@ -150,9 +150,9 @@
                        :current-chat-id current-chat-id}]]))
 
 (defn message-view
-  [{:keys [same-author index] :as message} content]
+  [{:keys [same-author index group-chat] :as message} content]
   [view (st/message-view message)
-   [message-author-name message]
+   (when group-chat [message-author-name message])
    content])
 
 (def replacements
@@ -256,11 +256,6 @@
     (if (or (zero? (count user-statuses))
             seen-by-everyone?)
       [view st/delivery-view
-       [image {:source (case status
-                         :seen {:uri :icon_ok_small}
-                         :failed res/delivery-failed-icon
-                         nil)
-               :style  st/delivery-image}]
        [text {:style st/delivery-text
               :font  :default}
         (message-status-label
@@ -300,11 +295,6 @@
                               :else
                               (or delivery-status message-status app-db-message-status-value :sending))]
     [view st/delivery-view
-     [image {:source (case status
-                       :seen {:uri :icon_ok_small}
-                       :failed res/delivery-failed-icon
-                       nil)
-             :style  st/delivery-image}]
      [text {:style st/delivery-text
             :font  :default}
       (message-status-label status)]]))

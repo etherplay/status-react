@@ -45,8 +45,8 @@
   {:height 16})
 
 (def message-body-base
-  {:padding-right 8
-   :padding-left  8})
+  {:padding-right 10
+   :padding-left  10})
 
 (defn message-body
   [{:keys [outgoing] :as message}]
@@ -74,29 +74,24 @@
   (let [align (if outgoing :flex-end :flex-start)]
     {:flexDirection :column
      :width         260
-     :padding-left  8
-     :padding-right 8
+     :padding-left  10
+     :padding-right 10
      :alignItems    align}))
 
 (def message-author
-  {:width     24
+  {:width     36
    :alignSelf :flex-start})
 
 (def photo-view {:borderRadius 12})
 (def photo
   {:borderRadius 12
-   :width        24
-   :height       24})
+   :width        36
+   :height       36})
 
 (def delivery-view
   {:flexDirection :row
    :marginTop     2
    :opacity       0.5})
-
-(def delivery-image
-  {:marginTop 6
-   :width     9
-   :height    7})
 
 (defstyle delivery-text
   {:color      color-gray4
