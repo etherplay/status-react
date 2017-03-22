@@ -50,13 +50,14 @@
        placeholder])))
 
 (defn input-view []
-  (let [component         (r/current-component)
-        set-layout-width  #(r/set-state component {:width %})
-        set-layout-height #(r/set-state component {:height %})
-        input-text        (subscribe [:chat :input-text])
-        masked-text       (subscribe [:chat :masked-text])
-        current-param     (subscribe [:chat :current-param])
-        command           (subscribe [:selected-chat-command])]
+  (let [component            (r/current-component)
+        set-layout-width     #(r/set-state component {:width %})
+        set-layout-height    #(r/set-state component {:height %})
+        input-text           (subscribe [:chat :input-text])
+        masked-text          (subscribe [:chat :masked-text])
+        current-param        (subscribe [:chat :current-param])
+        command              (subscribe [:selected-chat-command])
+        sending-in-progress? (subscribe [:chat-ui-props :sending-in-progress?])]
     (r/create-class
       {:component-will-mount
        (fn []
@@ -71,8 +72,9 @@
              {:ref                    #(dispatch [:set-chat-ui-props :input-ref %])
               :accessibility-label    id/chat-message-input
               :blur-on-submit         true
-              :default-value          (or @masked-text @input-text "")
               :multiline              true
+              :default-value          (or @masked-text @input-text "")
+              :editable               (not @sending-in-progress?)
               :on-blur                #(do (dispatch [:send-current-message])
                                            (dispatch [:set-chat-ui-props :input-focused? false])
                                            (set-layout-height 0))
@@ -91,7 +93,8 @@
                                                    (.-selection))]
                                          (dispatch [:set-chat-ui-props :selection {:start (.-start s)
                                                                                    :end   (.-end s)}]))
-              :on-submit-editing      #(dispatch [:send-current-message])
+              :on-submit-editing      #(do (dispatch [:set-chat-ui-props :sending-in-progress? true])
+                                           (dispatch [:send-current-message]))
               :on-focus               #(do (dispatch [:set-chat-ui-props :input-focused? true])
                                            (dispatch [:set-chat-ui-props :show-emoji? false]))
               :style                  style/input-view}]

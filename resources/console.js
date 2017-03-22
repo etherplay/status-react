@@ -1665,7 +1665,7 @@ var phoneConfig = {
     validator: function (params) {
         return {
             validationHandler: "phone",
-            parameters: [params.phone]
+            parameters: [params.args.phone]
         };
     },
     params: [{

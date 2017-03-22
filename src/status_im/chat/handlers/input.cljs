@@ -159,7 +159,6 @@
                      :address  current-account-id}]
         (dispatch [:set-chat-input-text nil chat-id])
         (dispatch [:set-chat-input-metadata nil chat-id])
-        (dispatch [:set-chat-ui-props :sending-disabled? true])
         (cond
           command-message
           (dispatch [:check-commands-handlers! data])
@@ -232,6 +231,7 @@
       (let [chat-id      (or chat-id current-chat-id)
             chat-command (input-model/selected-chat-command db chat-id)]
         (if chat-command
-          (when (input-model/command-complete? chat-command)
-            (dispatch [::proceed-command chat-command chat-id]))
+          (if (input-model/command-complete? chat-command)
+            (dispatch [::proceed-command chat-command chat-id])
+            (dispatch [:set-chat-ui-props :sending-in-progress? false]))
           (dispatch [::send-message nil chat-id]))))))
