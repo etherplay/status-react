@@ -7,6 +7,7 @@
                                                 text
                                                 icon]]
             [status-im.chat.styles.input.suggestions :as style]
+            [status-im.chat.views.input.utils :as input-utils]
             [status-im.data-store.messages :as messages]
             [status-im.i18n :refer [label]]
             [taoensso.timbre :as log]))
@@ -48,13 +49,15 @@
    [view style/header-icon]])
 
 (defview suggestions-view []
-  [chat-input-margin [:chat-input-margin]
-   input-height [:chat-ui-props :input-height]
+  [input-height [:chat-ui-props :input-height]
+   layout-height [:get :layout-height]
+   chat-input-margin [:chat-input-margin]
    show-suggestions? [:show-suggestions?]
    requests [:chat :request-suggestions]
    commands [:chat :command-suggestions]]
   (when show-suggestions?
-    [view (style/root 250 (+ input-height chat-input-margin))
+    [view (style/root (input-utils/max-area-height 500 (+ input-height chat-input-margin) layout-height)
+                      (+ input-height chat-input-margin))
      [header]
      [view {:flex 1}
       [scroll-view {:keyboardShouldPersistTaps true}

@@ -1509,9 +1509,6 @@ function createMarkupText(text) {
 }
 
 function jsSuggestions(params, context) {
-
-    console.log(context);
-
     var suggestions = getJsSuggestions(params.code, context);
     var sugestionsMarkup = [];
 
