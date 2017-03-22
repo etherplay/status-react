@@ -54,13 +54,16 @@
    :color            :transparent})
 
 (defn input-helper-text [left]
-  {:color               color-input-helper-text
-   :font-size           14
-   :position            :absolute
-   :height              min-input-height
-   :left                (+ 14 (if platform/android? 4 0) left)
-   :top                 (if platform/android? -1 0)
-   :text-align-vertical :center})
+  (merge {:color               color-input-helper-text
+          :font-size           14
+          :position            :absolute
+          :text-align-vertical :center
+          :height              min-input-height}
+         (if platform/android?
+           {:left (+ 18 left)
+            :top  -1}
+           {:line-height min-input-height
+            :left        (+ 14 left)})))
 
 (def input-emoji-icon
   {:height 20

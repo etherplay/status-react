@@ -56,20 +56,21 @@
    requests [:chat :request-suggestions]
    commands [:chat :command-suggestions]]
   (when show-suggestions?
-    [view (style/root (input-utils/max-area-height 500 (+ input-height chat-input-margin) layout-height)
-                      (+ input-height chat-input-margin))
-     [header]
-     [view {:flex 1}
-      [scroll-view {:keyboardShouldPersistTaps true}
-       (when (seq requests)
-         [view
-          [item-title false (label :t/suggestions-requests)]
-          (for [{:keys [chat-id message-id] :as request} requests]
-            ^{:key [chat-id message-id]}
-            [request-item 0 request])])
-       (when (seq commands)
-         [view
-          [item-title (seq requests) (label :t/suggestions-commands)]
-          (for [command (remove #(nil? (:title (second %))) commands)]
-            ^{:key (first command)}
-            [command-item 0 command])])]]]))
+    (let [bottom (+ input-height chat-input-margin)]
+      [view (style/root (input-utils/max-area-height bottom layout-height)
+                        bottom)
+       [header]
+       [view {:flex 1}
+        [scroll-view {:keyboardShouldPersistTaps true}
+         (when (seq requests)
+           [view
+            [item-title false (label :t/suggestions-requests)]
+            (for [{:keys [chat-id message-id] :as request} requests]
+              ^{:key [chat-id message-id]}
+              [request-item 0 request])])
+         (when (seq commands)
+           [view
+            [item-title (seq requests) (label :t/suggestions-commands)]
+            (for [command (remove #(nil? (:title (second %))) commands)]
+              ^{:key (first command)}
+              [command-item 0 command])])]]])))

@@ -43,6 +43,10 @@
             [taoensso.timbre :as log]
             [tailrecursion.priority-map :refer [priority-map-by]]))
 
+(register-handler :set-layout-height
+  (fn [db [_ height]]
+    (assoc db :layout-height height)))
+
 (register-handler :set-chat-ui-props
   (fn [{:keys [current-chat-id] :as db} [_ ui-element value chat-id]]
     (let [chat-id (or chat-id current-chat-id)]

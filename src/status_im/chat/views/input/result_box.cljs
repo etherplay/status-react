@@ -7,6 +7,7 @@
                                                 text
                                                 icon]]
             [status-im.chat.styles.input.result-box :as style]
+            [status-im.chat.views.input.utils :as input-utils]
             [status-im.i18n :refer [label]]
             [taoensso.timbre :as log]))
 
@@ -26,10 +27,13 @@
    markup])
 
 (defview result-box-view []
-  [chat-input-margin [:chat-input-margin]
-   input-height [:chat-ui-props :input-height]
+  [input-height [:chat-ui-props :input-height]
+   layout-height [:get :layout-height]
+   chat-input-margin [:chat-input-margin]
    {:keys [markup title] :as result-box} [:chat-ui-props :result-box]]
   (when result-box
-    [view (style/root 250 (+ input-height chat-input-margin))
-     [header title]
-     [result-box-container markup]]))
+    (let [bottom (+ input-height chat-input-margin)]
+      [view (style/root (input-utils/max-area-height bottom layout-height)
+                        bottom)
+       [header title]
+       [result-box-container markup]])))
