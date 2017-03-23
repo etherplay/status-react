@@ -130,7 +130,7 @@ function bridgedWebView(url) {
   }];
 }
 
-function validationMessage(titleText, descriptionText) {
+/*function validationMessage(titleText, descriptionText) {
     var titleStyle = {
         style: {
             color: "white",
@@ -157,6 +157,10 @@ function validationMessage(titleText, descriptionText) {
         },
         [title, description]
     );
+}*/
+
+function validationMessage(titleText, descriptionText) {
+    return ['validation-message', titleText, descriptionText];
 }
 
 var status = {

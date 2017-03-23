@@ -1608,7 +1608,7 @@ function startsWith(str1, str2) {
 
 function phoneSuggestions(params, context) {
     var ph, suggestions;
-    if (!params.phone || params.phone == "") {
+    if (!params.args.phone || params.args.phone == "") {
         ph = context.suggestions;
     } else {
         ph = context.suggestions.filter(function (phone) {
@@ -1622,7 +1622,7 @@ function phoneSuggestions(params, context) {
 
     suggestions = ph.map(function (phone) {
         return status.components.touchable(
-            {onPress: [status.events.SET_VALUE, phone.number]},
+            {onPress: [status.events.SET_COMMAND_ARGUMENT, [0, phone.number]]},
             status.components.view(suggestionContainerStyle,
                 [status.components.view(suggestionSubContainerStyle,
                     [
@@ -1637,14 +1637,6 @@ function phoneSuggestions(params, context) {
                     ])])
         );
     });
-
-    /*var view = status.components.view(
-     {style: {flex: 1, flexDirection: "column"}},
-     [status.components.scrollView(
-     suggestionsContainerStyle(ph.length),
-     suggestions
-     )]
-     );*/
 
     var view = status.components.scrollView(
         suggestionsContainerStyle(ph.length),
@@ -1669,6 +1661,7 @@ var phoneConfig = {
     params: [{
         name: "phone",
         type: status.types.PHONE,
+        suggestions: phoneSuggestions,
         placeholder: I18n.t('phone_placeholder')
     }]
 };

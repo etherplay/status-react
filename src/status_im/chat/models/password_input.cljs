@@ -16,7 +16,7 @@
         type          (if (> modification 0) :added :removed)
         position      (-> (:start selection)
                           (- (+ (count (:name old-command)) 2))
-                          (- (count (str/join " " (take arg-pos old-args)))))
+                          (- (count (str/join const/spacing-char (take arg-pos old-args)))))
         position      (if (= :added type) (dec position) position)
         symbols-count (.abs js/Math modification)]
     {:type     type

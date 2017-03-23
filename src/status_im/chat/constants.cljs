@@ -3,6 +3,7 @@
 (def command-char "/")
 (def spacing-char " ")
 (def masking-char "•")
+(def arg-wrapping-char "\"")
 
 (def input-height 56)
 (def max-input-height 66)

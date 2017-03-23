@@ -50,7 +50,7 @@
   :suggestions-handler
   [(after (print-error-message! "Error on param suggestions"))]
   (fn [{:keys [contacts chats] :as db} [{:keys [chat-id command parameter-index result]}]]
-    (let [{:keys [markup webViewUrl]} (get-in result [:result :returned])
+    (let [{:keys [markup]} (get-in result [:result :returned])
           {:keys [dapp? dapp-url]} (get contacts chat-id)
           hiccup       (generate-hiccup markup)
           web-view-url (if (and (= webViewUrl "dapp-url") dapp? dapp-url)

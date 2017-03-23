@@ -75,8 +75,7 @@
               :multiline              true
               :default-value          (or @masked-text @input-text "")
               :editable               (not @sending-in-progress?)
-              :on-blur                #(do (dispatch [:send-current-message])
-                                           (dispatch [:set-chat-ui-props :input-focused? false])
+              :on-blur                #(do (dispatch [:set-chat-ui-props :input-focused? false])
                                            (set-layout-height 0))
               :on-change-text         #(when-not (str/includes? % "\n")
                                          (do (dispatch [:set-chat-input-text %])
@@ -124,7 +123,8 @@
    [input-view]
    (when (and (not (str/blank? input-text))
               (or command-complete? (not selected-command)))
-     [touchable-highlight {:on-press #(dispatch [:send-current-message])}
+     [touchable-highlight {:on-press #(do (dispatch [:set-chat-ui-props :sending-in-progress? true])
+                                          (dispatch [:send-current-message]))}
       [view style/send-message-container
        [icon :arrow_top style/send-message-icon]]])])
 

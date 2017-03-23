@@ -36,7 +36,7 @@
       ;; the code bellow allows text maskers to work
       (if-let [{old-command :command
                 old-args    :args} (input-model/selected-chat-command db chat-id)]
-        (let [new-text      (into [] (str/split text const/spacing-char))
+        (let [new-text      (input-model/split-command-args text)
               new-args      (rest new-text)
               arg-pos       (changed-arg-position old-args new-args)
               current-param (get-in old-command [:params arg-pos])
@@ -72,7 +72,7 @@
       (dispatch [:set-chat-input-text (str const/command-char
                                            name
                                            const/spacing-char
-                                           (str/join const/spacing-char prefill))])
+                                           (input-model/join-command-args prefill))])
       (dispatch [:set-chat-input-metadata metadata])
       (dispatch [:set-chat-ui-props :show-suggestions? false])
       (dispatch [:set-chat-ui-props :result-box nil])
@@ -91,7 +91,7 @@
   (handlers/side-effect!
     (fn [{:keys [current-chat-id] :as db} [_ [index arg]]]
       (let [command      (-> (get-in db [:chats current-chat-id :input-text])
-                             (str/split const/spacing-char))
+                             (input-model/split-command-args))
             command-name (first command)
             command-args (into [] (rest command))
             command-args (if (< index (count command-args))
@@ -99,7 +99,7 @@
                            (conj command-args arg))]
         (dispatch [:set-chat-input-text (str command-name
                                              const/spacing-char
-                                             (str/join const/spacing-char command-args)
+                                             (input-model/join-command-args command-args)
                                              const/spacing-char)])))))
 
 (handlers/register-handler
@@ -136,10 +136,11 @@
                         parameter-index
                         :suggestions]
                 args   (-> (get-in db [:chats current-chat-id :input-text])
-                           (str/split const/spacing-char)
+                           (input-model/split-command-args)
                            (rest))
                 params {:parameters {:args args}
-                        :context    {:data data}}]
+                        :context    (merge {:data data}
+                                           (input-model/command-dependent-context-params command))}]
             (status/call-jail current-chat-id
                               path
                               params
@@ -180,20 +181,38 @@
 (handlers/register-handler
   ::proceed-validation-messages
   (handlers/side-effect!
-    (fn [db [_ command chat-id errors]]
-      (if errors
-        (dispatch [:set-chat-ui-props :validation-messages errors])
-        (dispatch [::request-command-data
-                   {:command   command
-                    :chat-id   chat-id
-                    :data-type :on-send
-                    :after     #(dispatch [::send-command %2 command chat-id])}])))))
+    (fn [db [_ command chat-id {:keys [markup validationHandler parameters] :as errors}]]
+      (let [set-errors #(do (dispatch [:set-chat-ui-props :validation-messages %])
+                            (dispatch [:set-chat-ui-props :sending-in-progress? false]))
+            proceed    #(dispatch [::request-command-data
+                                   {:command   command
+                                    :chat-id   chat-id
+                                    :data-type :on-send
+                                    :after     (fn [_ res]
+                                                 (dispatch [::send-command res command chat-id]))}])]
+        (cond
+          markup
+          (set-errors markup)
 
+          validationHandler
+          (do (dispatch [::execute-validation-handler validationHandler parameters set-errors proceed])
+              (dispatch [:set-chat-ui-props :sending-in-progress? false]))
+
+          :default
+          (proceed))))))
+
+(handlers/register-handler
+  ::execute-validation-handler
+  (handlers/side-effect!
+    (fn [_ [_ name params set-errors proceed]]
+      (when-let [validator (input-model/validation-handler name)]
+        (validator params set-errors proceed)))))
 
 (handlers/register-handler
   ::send-command
   (handlers/side-effect!
     (fn [db [_ on-send command chat-id]]
+      (log/debug "ALWX !!> on-send" on-send)
       (if on-send
         (do
           (dispatch [:set-chat-ui-props :result-box on-send])
@@ -251,8 +270,5 @@
                           path
                           params
                           (fn [{:keys [result] :as data}]
-                            (let [{:keys [returned]} result]
-                              (log/debug "ALWX !> Message suggestions: " returned)
-                              (if returned
-                                (dispatch [:suggestions-handler {:chat-id chat-id
-                                                                 :result  data}])))))))))
+                            (dispatch [:suggestions-handler {:chat-id chat-id
+                                                             :result  data}])))))))
