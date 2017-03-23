@@ -20,22 +20,22 @@
    :elevation        2
    :margin-bottom    margin-bottom})
 
-(defn container [command?]
+(defn container [blank-text?]
   {:background-color common/color-white
    :flex-direction   :column
-   :padding          (if command? 8 16)})
+   :padding          (if blank-text? 16 8)})
 
 (def input-container
   {:flex-direction :row})
 
-(defn input-root [content-height command?]
+(defn input-root [content-height blank-text?]
   {:align-items      :center
    :background-color color-input
    :border-radius    8
    :flex-direction   :row
    :flex-grow        1
    :height           (+ (min (max min-input-height content-height) max-input-height) 0)
-   :margin-top       (if command? 0 16)
+   :margin-top       (if blank-text? 16 0)
    :padding-left     10
    :padding-right    10})
 

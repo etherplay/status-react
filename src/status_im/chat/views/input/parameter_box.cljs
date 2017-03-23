@@ -9,7 +9,8 @@
             [status-im.chat.styles.input.parameter-box :as style]
             [status-im.chat.views.input.utils :as input-utils]
             [status-im.i18n :refer [label]]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [clojure.string :as str]))
 
 (defn header []
   [view {:style style/header-container}
@@ -24,8 +25,10 @@
   [input-height [:chat-ui-props :input-height]
    layout-height [:get :layout-height]
    chat-input-margin [:chat-input-margin]
-   chat-parameter-box [:chat-parameter-box]]
-  (when chat-parameter-box
+   chat-parameter-box [:chat-parameter-box]
+   input-text [:chat :input-text]]
+  (when (and chat-parameter-box
+             (not (str/blank? input-text)))
     (let [bottom (+ input-height chat-input-margin)]
       [view (style/root (input-utils/max-area-height bottom layout-height)
                         bottom)

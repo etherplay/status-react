@@ -117,6 +117,8 @@
           requests    (suggestions/get-request-suggestions db chat-text)
           suggestions (suggestions/get-command-suggestions db chat-text)
           {:keys [dapp?]} (get-in db [:contacts chat-id])]
+      (when (and dapp? (empty? (into requests suggestions)))
+        (dispatch [::check-dapp-suggestions chat-id chat-text]))
       (-> db
           (assoc-in [:chats chat-id :request-suggestions] requests)
           (assoc-in [:chats chat-id :command-suggestions] suggestions)))))
@@ -235,3 +237,22 @@
             (dispatch [::proceed-command chat-command chat-id])
             (dispatch [:set-chat-ui-props :sending-in-progress? false]))
           (dispatch [::send-message nil chat-id]))))))
+
+(handlers/register-handler
+  ::check-dapp-suggestions
+  (handlers/side-effect!
+    (fn [db [_ chat-id text]]
+      (let [data   (get-in db [:local-storage chat-id])
+            path   [:functions
+                    :message-suggestions]
+            params {:parameters {:message text}
+                    :context    {:data data}}]
+        (status/call-jail chat-id
+                          path
+                          params
+                          (fn [{:keys [result] :as data}]
+                            (let [{:keys [returned]} result]
+                              (log/debug "ALWX !> Message suggestions: " returned)
+                              (if returned
+                                (dispatch [:suggestions-handler {:chat-id chat-id
+                                                                 :result  data}])))))))))

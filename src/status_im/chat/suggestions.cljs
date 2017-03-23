@@ -5,16 +5,23 @@
                                                get-chat-command-request
                                                get-chat-command-to-message-id]]
             [status-im.utils.utils :refer [log http-get]]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [clojure.string :as str]))
 
 (defn suggestion? [text]
   (= (get text 0) chat-consts/command-char))
 
 (defn can-be-suggested? [text]
   (fn [{:keys [name]}]
-    (let [text' (if (.startsWith text chat-consts/command-char)
+    (let [text' (cond
+                  (.startsWith text chat-consts/command-char)
                   text
-                  chat-consts/command-char)]
+
+                  (str/blank? text)
+                  chat-consts/command-char
+
+                  :default
+                  nil)]
       (.startsWith (str chat-consts/command-char name) text'))))
 
 (defn get-request-suggestions

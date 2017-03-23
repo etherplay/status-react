@@ -67,7 +67,7 @@
        (fn []
          (let [{:keys [width height]} (r/state component)
                command @command]
-           [view (style/input-root height command)
+           [view (style/input-root height (str/blank? @input-text))
             [text-input
              {:ref                    #(dispatch [:set-chat-ui-props :input-ref %])
               :accessibility-label    id/chat-message-input
@@ -117,10 +117,13 @@
                 [icon :close_gray style/input-clear-icon]]])]))})))
 
 (defview input-container []
-  [command-complete? [:command-complete?]]
+  [command-complete? [:command-complete?]
+   selected-command [:selected-chat-command]
+   input-text [:chat :input-text]]
   [view style/input-container
    [input-view]
-   (when command-complete?
+   (when (and (not (str/blank? input-text))
+              (or command-complete? (not selected-command)))
      [touchable-highlight {:on-press #(dispatch [:send-current-message])}
       [view style/send-message-container
        [icon :arrow_top style/send-message-icon]]])])
@@ -128,7 +131,7 @@
 (defview container []
   [margin [:chat-input-margin]
    show-emoji? [:chat-ui-props :show-emoji?]
-   selected-chat-command [:selected-chat-command]]
+   input-text [:chat :input-text]]
   [view
    [parameter-box/parameter-box-view]
    [result-box/result-box-view]
@@ -139,8 +142,8 @@
                                   (.-layout)
                                   (.-height))]
                         (dispatch [:set-chat-ui-props :input-height h]))}
-    [view (style/container selected-chat-command)
-     (when-not selected-chat-command
+    [view (style/container (str/blank? input-text))
+     (when (str/blank? input-text)
        [commands-view])
      [input-container]]
     (when show-emoji?

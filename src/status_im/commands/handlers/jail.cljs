@@ -56,7 +56,9 @@
           web-view-url (if (and (= webViewUrl "dapp-url") dapp? dapp-url)
                          (get-contact-translated chat-id :dapp-url dapp-url)
                          webViewUrl)
-          path         [:chats chat-id :parameter-boxes (:name command) parameter-index]]
+          path         (if command
+                         [:chats chat-id :parameter-boxes (:name command) parameter-index]
+                         [:chats chat-id :parameter-boxes :message])]
       (assoc-in db path (cond
                           hiccup {:hiccup hiccup}
                           web-view-url {:url web-view-url}
@@ -69,6 +71,7 @@
       (let [{:keys [dapp?]} (get-in db [:contacts current-chat-id])]
         (case (keyword n)
           :set-command-argument (dispatch [:set-command-argument arg])
+          :set-value (dispatch [:set-chat-input-text arg])
           nil)))))
 
 (reg-handler :set-local-storage

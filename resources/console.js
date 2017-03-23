@@ -1198,6 +1198,7 @@ var jsBoldValueStyle = {
 
 var jsDescriptionStyle = {
     marginTop: 1.5,
+    paddingBottom: 9,
     fontSize: 14,
     fontFamily: "font",
     color: "#838c93de"

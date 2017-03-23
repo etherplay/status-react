@@ -98,9 +98,16 @@
           command (subscribe [:selected-chat-command chat-id])
           index   (subscribe [:current-chat-argument-position chat-id])]
       (reaction
-        (when (and @command (> @index -1))
+        (cond
+          (and @command (> @index -1))
           (let [command-name (get-in @command [:command :name])]
-            (get-in @db [:chats chat-id :parameter-boxes command-name @index])))))))
+            (get-in @db [:chats chat-id :parameter-boxes command-name @index]))
+
+          (not @command)
+          (get-in @db [:chats chat-id :parameter-boxes :message])
+
+          :default
+          nil)))))
 
 (register-sub
   :command-complete?
